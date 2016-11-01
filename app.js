@@ -56,18 +56,26 @@ app.get('/r/:id', function(req, res){
 
 // upload route
 app.post('/upload', function(req, res) {
-		console.log("UPLOAD");
-        upload(req,res,function(err){
-            if(err){
-            	console.log("Error ! ");
-            	console.log(err);
-                 res.json({error_code:1,err_desc:err});
-                 return;
-            }
-             res.json({error_code:0,err_desc:null});
-        });
+	console.log("UPLOAD");
+    upload(req,res,function(err){
+        if(err){
+        	console.log("Error ! ");
+        	console.log(err);
+             res.json({error_code:1,err_desc:err});
+             return;
+        }
+         res.json({error_code:0,err_desc:null});
+    });
 });
 
+// marker route
+app.get('/i/:img', function(req, res) {
+	try {
+ 	 res.sendFile(path.join(__dirname + '/upload/'+req.params.img));
+	} catch (e) {
+	  res.send(req.params.img+"doesn't exist !");
+	}
+});
 // Server
 var server = app.listen(21027, function () {
    var host = server.address().address
@@ -83,6 +91,18 @@ function randomString(length) {
     return Math.round((Math.pow(36, length + 1) - Math.random() * Math.pow(36, length))).toString(36).slice(1);
 }
 
+function checkIfFile(file, cb) {
+  fs.stat(file, function fsStat(err, stats) {
+    if (err) {
+      if (err.code === 'ENOENT') {
+        return cb(null, false);
+      } else {
+        return cb(err);
+      }
+    }
+    return cb(null, stats.isFile());
+  });
+}
 /*// Connection a MongoDB
 mongoose.connect('mongodb://nyu.moe/MarkerApp');
 
