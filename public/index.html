@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Marker</title>
+	<link rel="stylesheet" type="text/css" href="/style.css">
+</head>
+<body>
+
+<div ng-app="markerList" ng-controller="tableau">
+<p>Mail : {{ mail }}</p>
+<form  ng-controller="MyCtrl as up" name="up.upload_form">
+        Single Image with validations
+    <input
+       type="file"
+       ngf-select
+       ng-model="up.file"
+       name="file"
+       ngf-pattern="'image/*'"
+       accept="image/*"
+       ngf-max-size="20MB"
+       />
+    Image thumbnail: <img style="width:100px;" ngf-thumbnail="up.file || '/thumb.jpg'"/>
+    <i ng-show="up.upload_form.file.$error.required">*required</i><br>
+    <i ng-show="up.upload_form.file.$error.maxSize">File too large
+    {{up.file.size / 1000000|number:1}}MB: max 20M</i>
+    <button type="submit" ng-click="up.submit()">submit</button>
+    <p>{{up.progress}}
+</form>
+<br>
+<p>Url du marker : 	<input type="text" value="{{ urlMarker }}"></p>
+<table>
+	<tr>
+		<th>ip</th>
+		<th>date</th>
+	</tr>
+	<tr ng-repeat="x in list | orderBy : 'sortByDate':true">
+		<td>{{ x.ip }}</td>
+		<td>{{ x.date }}</td>
+	</tr>
+</table>
+
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.25/angular.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/danialfarid-angular-file-upload/12.2.12/ng-file-upload-shim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/danialfarid-angular-file-upload/12.2.12/ng-file-upload.min.js"></script>
+
+<script>
+// Application
+var app = angular.module('markerList', ['ngFileUpload']);
+
+app.controller('MyCtrl',['Upload','$window',function(Upload,$window){
+        var vm = this;
+        vm.submit = function(){ //function to call on form submit
+            if (vm.upload_form.file.$valid && vm.file) { //check if from is valid
+                vm.upload(vm.file); //call upload function
+            }
+        }
+        vm.upload = function (file) {
+            Upload.upload({
+                url: '/upload', //webAPI exposed to upload the file
+                data:{file:file} //pass file as data, should be user ng-model
+            }).then(function (resp) { //upload function returns a promise
+                if(resp.data.error_code === 0){ //validate success
+                    $window.alert('Success ' + resp.config.data.file.name + 'uploaded. Response: ');
+                } else {
+                    $window.alert('an error occured');
+                }
+            }, function (resp) { //catch error
+                console.log('Error status: ' + resp.status);
+                $window.alert('Error status: ' + resp.status);
+            }, function (evt) {
+                console.log(evt);
+                var progressPercentage = parseInt(100.0 * evt.loaded / evt.total);
+                console.log('progress: ' + progressPercentage + '% ' + evt.config.data.file.name);
+                vm.progress = 'progress: ' + progressPercentage + '% '; // capture upload progress
+            });
+        };
+    }]);
+
+// Controller tableau
+app.controller('tableau', function($scope,$http) {
+	// Tri par date pour l'affichage
+	$scope.sortByDate = function (o) {
+		return new Date(o.date);
+	};
+
+	// Liste des accès
+	$http.get("/entries")
+	.then(function (response) {
+		$scope.list = response.data;
+	});
+	$scope.list = [
+		{ ip : '0.0.0.0', date: '29/10/2016 16:30:15'},
+		{ ip : '1.0.0.0', date: '12/03/2016 16:30:15'},
+
+	];
+
+	// Marked
+	$scope.mail = "toto@gmail.coume";
+
+	// Marker
+	$scope.marker = "signature.png";
+
+	// Url du marker
+	$scope.urlMarker = "Unknown";
+
+});
+
+
+</script>
+</body>
+</html>

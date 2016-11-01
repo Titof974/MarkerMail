@@ -1,0 +1,13 @@
+{
+  "name"         : "Marker",
+  "version"      : "0.0.0",
+  "description"  : "Marker",
+  "main"         : "server.js",
+  "author"       : "Titof",
+  "dependencies" : {
+    "express"        : "^4.13.4",
+    "mongoose"       : "^4.4.12",
+    "body-parser": "^1.14.1",
+    "multer": "^1.1.0"
+  }
+}
