@@ -14,6 +14,48 @@ var bodyParser = require('body-parser');
 var multer = require('multer');
 var path = require('path');
 
+/*
++++++++++++++++++
++    MONGODB    +
++++++++++++++++++
+*/
+
+// Connection a MongoDB
+mongoose.connect('mongodb://nyu.moe/MarkerApp');
+
+var entrySchema = new mongoose.Schema({
+	rid : String, // random id
+	img : String, // Name of the marker
+	createDate : { type: Date, default: Date.now }, // Creation date
+	ips : [{
+		ip: String,
+		date : { type: Date, default: Date.now },
+		mail : String
+	}], // List of IPs
+	userMail : String // User Mail
+});
+
+var Entry = mongoose.model('marker', entrySchema);
+
+function setEntry(rid, img, userMail) {
+	var userMail = userMail || "";
+	var entry = new Entry({rid : rid, img : img, ips : [], userMail : userMail });
+	entry.save(function(err){
+		if(err){
+			console.log(err);
+		}
+		else{
+			console.log(entry);
+		}
+	});
+}
+//setEntry("test","img1");
+/*
++++++++++++++++++
++      WEB      +
++++++++++++++++++
+*/
+
 // Allow cross origin request
 app.use(function(req, res, next) {
     res.setHeader("Access-Control-Allow-Methods", "POST, PUT, OPTIONS, DELETE, GET");
