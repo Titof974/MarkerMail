@@ -19,6 +19,7 @@
        accept="image/*"
        ngf-max-size="20MB"
        />
+    <input type="text" hidden id="savePath" name="savePath" value="path"/>
     Image thumbnail: <img style="width:100px;" ngf-thumbnail="up.file || '/thumb.jpg'"/>
     <i ng-show="up.upload_form.file.$error.required">*required</i><br>
     <i ng-show="up.upload_form.file.$error.maxSize">File too large

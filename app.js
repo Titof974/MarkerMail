@@ -125,21 +125,6 @@ app.get('/', function(req,res,next){
 app.use(express.static('public'));
 app.use(bodyParser.json()); 
 
-// Multer disk storage settings
-var storage = multer.diskStorage({
-        destination: function (req, file, cb) {
-            cb(null, './upload/');
-        },
-        filename: function (req, file, cb) {
-            var datetimestamp = Date.now();
-            cb(null, file.fieldname + '-' + datetimestamp + '.' + file.originalname.split('.')[file.originalname.split('.').length -1]);
-        }
-});
-
-// Multer setting
-var upload = multer({
-                    storage: storage
-}).single('file');
 
 // Load index for random id
 app.get('/r/:id', function(req, res){
@@ -149,16 +134,32 @@ app.get('/r/:id', function(req, res){
 
 // upload route
 app.post('/upload', function(req, res) {
-	console.log("UPLOAD");
-    upload(req,res,function(err){
-        if(err){
-        	console.log("Error ! ");
-        	console.log(err);
-             res.json({error_code:1,err_desc:err});
-             return;
-        }
-         res.json({error_code:0,err_desc:null});
+
+    console.log(req.headers.referer);
+    // Multer disk storage settings
+    var storage = multer.diskStorage({
+            destination: function (req, file, cb) {
+                cb(null, './upload/');
+            },
+            filename: function (req, file, cb) {
+                var datetimestamp = Date.now();
+                cb(null, file.fieldname + '-' + datetimestamp + '.' + file.originalname.split('.')[file.originalname.split('.').length -1]);
+            }
     });
+
+    // Multer setting
+    var upload = multer({
+                        storage: storage
+    }).single('file');
+
+    // upload(req,res,function(err){
+    //     if(err){
+    //     	console.log(err);
+    //          res.json({error_code:1,err_desc:err});
+    //          return;
+    //     }
+    //      res.json({error_code:0,err_desc:null});
+    // });
 });
 
 // marker route
