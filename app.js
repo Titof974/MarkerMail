@@ -60,19 +60,42 @@ function addIpEntry(rid) {
   });
 }
 
-// Select an entry
-function getEntry(rid) {
-  Entry.findOne({rid : rid}, function (err, e) {
-    if (err) return handleError(err);
-    console.log(e.ips); // Space Ghost is a talk show host.
+// Set img to an entry
+function setImgEntry(rid,img) {
+  Entry.findOneAndUpdate({rid : rid}, { $set : {img : img} }, function(err, doc) {
+    if (err) { console.log("Error update"); }
+    console.log(doc);
   });
 }
+
+// Set userMail to an entry
+function setUMEntry(rid, UM) {
+  Entry.findOneAndUpdate({rid : rid}, { $set : {userMail : UM} }, function(err, doc) {
+    if (err) { console.log("Error update"); }
+    console.log(doc);
+  });
+}
+
+
+
+// Select an entry
+function getEntry(rid,field) {
+  Entry.findOne({rid : rid}, function (err, e) {
+    if (err) return handleError(err);
+    console.log(e[field]); // Space Ghost is a talk show host.
+  });
+}
+
+
 
 /*
 +     TEST     +
 */
 
-getEntry("test");
+
+getEntry("test","img");
+setImgEntry("test","yolo2");
+getEntry("test","img");
 //addIpEntry("test");
 //getEntry("test");
 
