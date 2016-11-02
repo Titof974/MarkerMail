@@ -21,7 +21,7 @@ var path = require('path');
 */
 
 // Connection a MongoDB
-mongoose.connect('mongodb://nyu.moe/MarkerApp');
+mongoose.connect('mongodb://localhost/MarkerApp');
 
 var entrySchema = new mongoose.Schema({
 	rid : String, // random id
@@ -35,8 +35,10 @@ var entrySchema = new mongoose.Schema({
 	userMail : String // User Mail
 });
 
+// Modele
 var Entry = mongoose.model('marker', entrySchema);
 
+// Create a new entry
 function setEntry(rid, img, userMail) {
 	var userMail = userMail || "";
 	var entry = new Entry({rid : rid, img : img, ips : [], userMail : userMail });
@@ -49,7 +51,33 @@ function setEntry(rid, img, userMail) {
 		}
 	});
 }
+
+// Add ip to an entry
+function addIpEntry(rid) {
+  Entry.findOneAndUpdate({rid : rid}, { $addToSet : {ips : { ip : "0.0.0.0"}}}, function(err,doc) {
+    if (err) { console.log("Error update"); }
+    console.log(doc);
+  });
+}
+
+// Select an entry
+function getEntry(rid) {
+  Entry.findOne({rid : rid}, function (err, e) {
+    if (err) return handleError(err);
+    console.log(e.ips); // Space Ghost is a talk show host.
+  });
+}
+
+/*
++     TEST     +
+*/
+
+getEntry("test");
+//addIpEntry("test");
+//getEntry("test");
+
 //setEntry("test","img1");
+
 /*
 +++++++++++++++++
 +      WEB      +
