@@ -21,7 +21,7 @@ var path = require('path');
 */
 
 // Connection a MongoDB
-mongoose.connect('mongodb://localhost/MarkerApp');
+mongoose.connect('mongodb://nyu.moe/MarkerApp');
 
 var entrySchema = new mongoose.Schema({
 	rid : String, // random id
@@ -53,8 +53,8 @@ function setEntry(rid, img, userMail) {
 }
 
 // Add ip to an entry
-function addIpEntry(rid) {
-  Entry.findOneAndUpdate({rid : rid}, { $addToSet : {ips : { ip : "0.0.0.0"}}}, function(err,doc) {
+function addIpEntry(rid,ip) {
+  Entry.findOneAndUpdate({rid : rid}, { $addToSet : {ips : { ip : ip}}}, function(err,doc) {
     if (err) { console.log("Error update"); }
     console.log(doc);
   });
@@ -80,10 +80,15 @@ function setUMEntry(rid, UM) {
 
 // Select an entry
 function getEntry(rid,field) {
-  Entry.findOne({rid : rid}, function (err, e) {
-    if (err) return handleError(err);
-    console.log(e[field]); // Space Ghost is a talk show host.
-  });
+	Entry.findOne({rid : rid}, function (err, e) {
+		if (err) return handleError(err);
+		try {
+		    console.log(e[field]);
+		} catch (errf) {
+			console.log(errf);
+		}
+	});
+  return efield;
 }
 
 
@@ -93,9 +98,9 @@ function getEntry(rid,field) {
 */
 
 
-getEntry("test","img");
-setImgEntry("test","yolo2");
-getEntry("test","img");
+//getEntry("test","img");
+//setImgEntry("test","yolo2");
+//getEntry("test","img");
 //addIpEntry("test");
 //getEntry("test");
 
@@ -134,8 +139,12 @@ app.get('/r/:id', function(req, res){
 
 // upload route
 app.post('/upload', function(req, res) {
+	// Get the RId
+    var referer = req.headers.referer;
+    var rePattern = new RegExp("\/r\/(.{12})$");
+    var arrMatches = referer.match(rePattern);
+    var rid = arrMatches[1];
 
-    console.log(req.headers.referer);
     // Multer disk storage settings
     var storage = multer.diskStorage({
             destination: function (req, file, cb) {
@@ -143,7 +152,9 @@ app.post('/upload', function(req, res) {
             },
             filename: function (req, file, cb) {
                 var datetimestamp = Date.now();
-                cb(null, file.fieldname + '-' + datetimestamp + '.' + file.originalname.split('.')[file.originalname.split('.').length -1]);
+                var name = file.fieldname + '-' + datetimestamp + '.' + file.originalname.split('.')[file.originalname.split('.').length -1];
+                setImgEntry(rid,name);
+                cb(null, name);
             }
     });
 
@@ -152,24 +163,79 @@ app.post('/upload', function(req, res) {
                         storage: storage
     }).single('file');
 
-    // upload(req,res,function(err){
-    //     if(err){
-    //     	console.log(err);
-    //          res.json({error_code:1,err_desc:err});
-    //          return;
-    //     }
-    //      res.json({error_code:0,err_desc:null});
-    // });
+    upload(req,res,function(err){
+        if(err){
+        	console.log(err);
+             res.json({error_code:1,err_desc:err});
+             return;
+        }
+         res.json({error_code:0,err_desc:null});
+    });
 });
 
-// marker route
+// img route
+app.get('/urlImgByRId', function(req, res) {
+	// check if the query GET["rid"] exist
+	if (!isNull(req.query.rid)) {
+		var rid = req.query.rid;
+		// Find the img with the rid
+		Entry.findOne({rid : rid}, function (err, e) {
+		if (err) return handleError(err);
+			try {
+				// Send the name of the img
+			    res.send(e["img"]);
+			} catch (errf) {
+				console.log(errf);
+			}
+		});
+	}
+});
+
+// display an image
 app.get('/i/:img', function(req, res) {
 	try {
  	 res.sendFile(path.join(__dirname + '/upload/'+req.params.img));
 	} catch (e) {
-	  res.send(req.params.img+"doesn't exist !");
+	  res.send(req.params.img+" doesn't exist !");
 	}
 });
+
+// marker route
+app.get('/m/:rid', function(req, res) {
+	// Get the ip
+	var ip = req.headers['x-forwarded-for'] || 
+     req.connection.remoteAddress || 
+     req.socket.remoteAddress ||
+     req.connection.socket.remoteAddress;
+     // Get the rid
+     var rid =  req.params.rid;
+     // find the img with the rid
+     Entry.findOne({rid : rid}, function (err, e) {
+		if (err) return handleError(err);
+			try {
+			    var img = e["img"];
+			    addIpEntry(rid, ip); // Mark the ip
+			    // Send the img for display
+			    res.sendFile(path.join(__dirname + '/upload/'+img));
+			} catch (errf) {
+				res.send("No data");
+			}
+		});
+});
+
+// entries route
+app.get('/entries', function(req,res) {
+   Entry.findOne({rid : "0kh49zwdkw4g"}, function (err, e) {
+		if (err) return handleError(err);
+		try {
+		    console.log(e["ips"]);
+		    res.json(e["ips"]);
+		} catch (errf) {
+			console.log(errf);
+		}
+	});
+})
+
 // Server
 var server = app.listen(21027, function () {
    var host = server.address().address
@@ -196,6 +262,10 @@ function checkIfFile(file, cb) {
     }
     return cb(null, stats.isFile());
   });
+}
+
+function isNull(stuff) {
+	return (typeof stuff == 'undefined' && stuff == null);
 }
 /*// Connection a MongoDB
 mongoose.connect('mongodb://nyu.moe/MarkerApp');

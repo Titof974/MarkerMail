@@ -7,6 +7,7 @@
 <body>
 
 <div ng-app="markerList" ng-controller="tableau">
+<p><img src="/i/{{ image }}" style="width:200px;"/>
 <p>Mail : {{ mail }}</p>
 <form  ng-controller="MyCtrl as up" name="up.upload_form">
         Single Image with validations
@@ -51,6 +52,7 @@
 var app = angular.module('markerList', ['ngFileUpload']);
 
 app.controller('MyCtrl',['Upload','$window',function(Upload,$window){
+
         var vm = this;
         vm.submit = function(){ //function to call on form submit
             if (vm.upload_form.file.$valid && vm.file) { //check if from is valid
@@ -80,7 +82,12 @@ app.controller('MyCtrl',['Upload','$window',function(Upload,$window){
     }]);
 
 // Controller tableau
-app.controller('tableau', function($scope,$http) {
+app.controller('tableau', ['$scope', '$http', '$location', function($scope,$http,$location) {
+	$scope.myUrl = $location.absUrl();
+	var rePattern = new RegExp("\/r\/(.{12})$");
+	var arrMatches = $scope.myUrl.match(rePattern);
+	$scope.rid = arrMatches[1];
+	console.log($scope.rid);
 	// Tri par date pour l'affichage
 	$scope.sortByDate = function (o) {
 		return new Date(o.date);
@@ -89,13 +96,19 @@ app.controller('tableau', function($scope,$http) {
 	// Liste des accès
 	$http.get("/entries")
 	.then(function (response) {
+		console.log(response.data);
 		$scope.list = response.data;
 	});
-	$scope.list = [
+	$http.get("/urlImgByRId", {
+		params : {rid : $scope.rid }
+	}).then(function (r) {
+		$scope.image = r.data;
+	});
+	/*$scope.list = [
 		{ ip : '0.0.0.0', date: '29/10/2016 16:30:15'},
 		{ ip : '1.0.0.0', date: '12/03/2016 16:30:15'},
 
-	];
+	];*/
 
 	// Marked
 	$scope.mail = "toto@gmail.coume";
@@ -104,9 +117,9 @@ app.controller('tableau', function($scope,$http) {
 	$scope.marker = "signature.png";
 
 	// Url du marker
-	$scope.urlMarker = "Unknown";
+	$scope.urlMarker = "http://"+window.location.host+"/m/"+$scope.rid;
 
-});
+}]);
 
 
 </script>
